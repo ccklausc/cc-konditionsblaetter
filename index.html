@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Übersicht Konditionsblätter — CC AT</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f5f6f8; color: #222; }
+  header { background: #1c3a5e; color: white; padding: 16px 24px; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  header .sub { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 16px 24px; }
+  .notice { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; border-radius: 4px; }
+  .controls { background: white; padding: 16px 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.07); margin-bottom: 16px; }
+  .slider-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .slider-row label { font-weight: 600; }
+  .slider-row input[type=range] { flex: 1; min-width: 250px; max-width: 600px; }
+  .slider-row .days-out { font-size: 20px; font-weight: 600; color: #1c3a5e; min-width: 80px; text-align: center; padding: 4px 12px; background: #e6ebf2; border-radius: 6px; }
+  .filter-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .pill { padding: 6px 12px; border: 1px solid #ccc; border-radius: 20px; cursor: pointer; user-select: none; font-size: 13px; background: white; }
+  .pill.active { background: #1c3a5e; color: white; border-color: #1c3a5e; }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stat-card { background: white; padding: 14px 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
+  .stat-card .num { font-size: 22px; font-weight: 700; color: #1c3a5e; }
+  .stat-card .lbl { font-size: 12px; color: #666; margin-top: 2px; }
+  .stat-card.warn .num { color: #d97706; }
+  .stat-card.danger .num { color: #dc2626; }
+  .stat-card.ok .num { color: #059669; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 2px solid #ddd; flex-wrap: wrap; }
+  .tab { padding: 10px 16px; cursor: pointer; user-select: none; font-weight: 500; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+  .tab.active { color: #1c3a5e; border-bottom-color: #1c3a5e; }
+  .list-pane { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.07); overflow: hidden; }
+  .list-header, .list-row { display: grid; grid-template-columns: 70px 1fr 110px 110px 110px 90px 130px; gap: 8px; padding: 8px 14px; border-bottom: 1px solid #eee; align-items: center; font-size: 13px; }
+  .list-header { background: #f1f3f6; font-weight: 600; font-size: 12px; color: #555; text-transform: uppercase; }
+  .list-row:hover { background: #f9fafb; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .b-kondi { background: #ddf3e1; color: #047b3b; }
+  .b-brutto { background: #e0e7ff; color: #4338ca; }
+  .b-netto { background: #fef3c7; color: #92400e; }
+  .b-preisliste { background: #fde2e8; color: #9d174d; }
+  .b-sonstige { background: #f3e8ff; color: #6b21a8; }
+  .b-future { background: #cffafe; color: #0e7490; }
+  .days-cell { font-weight: 600; }
+  .days-red { color: #dc2626; }
+  .days-orange { color: #d97706; }
+  .days-green { color: #059669; }
+  .days-grey { color: #6b7280; }
+  details.supplier { background: white; margin-bottom: 8px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  details.supplier summary { padding: 12px 16px; cursor: pointer; user-select: none; display: grid; grid-template-columns: 24px 70px 2fr 1fr 1fr; gap: 12px; align-items: center; }
+  details.supplier summary::-webkit-details-marker { display: none; }
+  details.supplier summary::before { content: '▶'; display: inline-block; transition: transform .2s; font-size: 12px; color: #888; }
+  details.supplier[open] summary::before { transform: rotate(90deg); }
+  details.supplier .doc-table { padding: 4px 16px 12px 60px; }
+  details.supplier .doc-row { display: grid; grid-template-columns: 1fr 200px 80px 80px 130px; gap: 8px; padding: 6px 8px; font-size: 12px; border-bottom: 1px dashed #eee; align-items: center; }
+  .summary-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+  .sp-ok { background: #d1fae5; color: #065f46; }
+  .sp-warn { background: #fed7aa; color: #9a3412; }
+  .sp-miss { background: #fecaca; color: #991b1b; }
+  .sp-future { background: #cffafe; color: #155e75; }
+  .empty-message { padding: 40px; text-align: center; color: #6b7280; }
+  footer { text-align: center; padding: 24px; color: #9ca3af; font-size: 12px; }
+  h3 { margin: 16px 0 8px; color: #1c3a5e; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Übersicht Konditionsblätter — CC AT</h1>
+  <div class="sub">Stand: 2026-05-16 · 40 AT-Lieferanten · Quelle: ContractNet (Live-Abruf)</div>
+</header>
+<div class="container">
+  <div class="notice"><strong>Hinweis:</strong> Basisliste auf 40 in ContractNet vorhandene AT-Lieferanten bereinigt. Die DE-Lieferanten mit AT-Bezug (z.B. Kronospan OSB 970837, Ostendorf 974123) werden in einem späteren Schritt ergänzt.</div>
+  <div class="stats-row" id="stats"></div>
+  <div class="controls">
+    <div class="slider-row">
+      <label for="dayslider">Fällig in</label>
+      <input type="range" id="dayslider" min="1" max="180" value="30" step="1">
+      <div class="days-out" id="daysout">30 Tagen</div>
+    </div>
+    <div class="filter-pills">
+      <div class="pill active" data-cls="all">Alle</div>
+      <div class="pill" data-cls="kondi">Konditionsblatt</div>
+      <div class="pill" data-cls="brutto">Bruttopreisliste</div>
+      <div class="pill" data-cls="netto">Nettopreisliste</div>
+      <div class="pill" data-cls="preisliste">Preisliste (unspez.)</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-view="expiring">Fällige Dokumente (Schieberegler)</div>
+    <div class="tab" data-view="supplier">Lieferanten-Status</div>
+    <div class="tab" data-view="missing">Lieferanten ohne Dokumente</div>
+  </div>
+  <div id="content"></div>
+</div>
+<footer>Übersicht Konditionsblätter · CC Wien / Contractnet · Auto-generiert 2026-05-16</footer>
+<script>
+const DATA = [{"id": "920425", "name": "ACO GmbH", "ort": "Baden", "wg": "Tiefbau / GaLaBau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "ACO Bauelemente Preisliste 2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "19.11.2025", "vr": "durchschnittl. + 3%", "bm": "", "cls": "preisliste"}], "future": []}, {"id": "899733", "name": "ACP IT Solutions GmbH", "ort": "Wien", "wg": "Produktion und Dienstleistung", "listung": "CC-Listung", "found": true, "aktuelle": [], "future": []}, {"id": "899658", "name": "Alpacem Zement Austria GmbH", "ort": "Klein St. Paul", "wg": "Hochbau", "listung": "CC-Listung", "found": true, "aktuelle": [], "future": []}, {"id": "927760", "name": "Ampack Handels GmbH", "ort": "Götzis", "wg": "Dach & Fassade", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [], "future": []}, {"id": "920110", "name": "Ardex Baustoff GmbH", "ort": "Loosdorf", "wg": "Hochbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "WEDI Listenvkpreisliste 2026_1", "gu": "01.02.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "02.02.2026", "vr": "", "bm": "", "cls": "brutto"}, {"bz": "LITHOFIN Listenvkpreisliste 2026_1", "gu": "01.02.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "02.02.2026", "vr": "", "bm": "", "cls": "brutto"}, {"bz": "GUTJAHR Listenvkpreisliste 2026_1", "gu": "01.02.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "02.02.2026", "vr": "", "bm": "", "cls": "brutto"}, {"bz": "ARDEX Listenvkpreisliste 2026_1", "gu": "01.02.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "02.02.2026", "vr": "", "bm": "", "cls": "brutto"}, {"bz": "Preislisten 2026 (pdf) - ARDEX/GUTJAHR/LITHOFIN/wedi", "gu": "01.02.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "02.02.2026", "vr": "", "bm": "die PDF - Preislisten der Ardex Gruppe:ARDEXGUTJAHRLITHOFINwedi", "cls": "preisliste"}, {"bz": "Konditionsblatt Ardex 2026_bis auf Widerruf", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "23.01.2026", "vr": "", "bm": "", "cls": "kondi"}], "future": []}, {"id": "920000", "name": "Austrotherm Österreich GmbH", "ort": "Pinkafeld", "wg": "Dämmstoffe", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "CC Konditionen SÜD ab 01.05.2026 bis 31.05.2026", "gu": "01.05.2026 - 31.05.2026", "tp": "übergeordnet", "ei": "09.04.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "CC Konditionen Nord/Ost ab 01.05.2026 bis 31.05.2026", "gu": "01.05.2026 - 31.05.2026", "tp": "übergeordnet", "ei": "09.04.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Preisvergleich XPS April und Mai 2026", "gu": "16.04.2026 - 30.05.2026", "tp": "übergeordnet", "ei": "16.04.2026", "vr": "", "bm": "vorbehaltlich weiterer kurzfristiger Änderungen der Industrie", "cls": "kondi"}, {"bz": "Preisvergleich EPS April und Mai 2026", "gu": "16.04.2026 - 30.05.2026", "tp": "übergeordnet", "ei": "16.04.2026", "vr": "", "bm": "vorbehaltlich weiterer kurzfristiger Änderungen der Industrie", "cls": "kondi"}, {"bz": "Austrotherm Preisliste 2026", "gu": "01.03.2026 - 28.02.2027", "tp": "übergeordnet", "ei": "10.02.2026", "vr": "", "bm": "", "cls": "preisliste"}], "future": [{"bz": "CC Konditionen Nord/Ost ab 01.06.2026 bis auf Widerruf", "gu": "01.06.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "06.05.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "CC Konditionen SÜD ab 01.06.2026 bis auf Widerruf", "gu": "01.06.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "06.05.2026", "vr": "", "bm": "", "cls": "kondi"}]}, {"id": "920441", "name": "Baumit GmbH", "ort": "Waldegg", "wg": "Hochbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Baumit Konditionen ab 01.01.2026_bis auf Widerruf", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "27.11.2025", "vr": "", "bm": "Finales Konditionsblatt Baumit ab 01.01.2026.In dieser Version des Konditionsblattes sind nun die final vereinbarten Konditionen ab 01.01.2026 enthalten.Die Abweichungen zu jenem Konditionsblatt 2026 welches zuvor als Vorschau im CC-Net hinterlegt war, sind auf Artikel- bzw. Positionsebene in dieser aktuellen Version gelb markiert. Bitte berücksichtigen Sie dies für Ihre Preispflege.Für diese gelb markierten Positionen wurden nun noch Verbesserungen zum ursprünglichen EK-Netto ab 01.01.2026 erzielt.", "cls": "kondi"}, {"bz": "Baumit UVP Listenpreise ab 01.01.2026_bis auf Widerruf", "gu": "01.01.2026 - 31.12.2027", "tp": "übergeordnet", "ei": "29.10.2025", "vr": "", "bm": "", "cls": "brutto"}], "future": []}, {"id": "920450", "name": "BMI Österreich GmbH", "ort": "Wopfing", "wg": "Dach & Fassade", "listung": "CC-Listung und hgb-Listung", "found": false, "aktuelle": [], "future": []}, {"id": "921010", "name": "Donau Kies GmbH & Co. KG", "ort": "Spitz/Donau", "wg": "Hochbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Hagomat Preisliste 2026 (xlsx), gültig ab 01.02.2026", "gu": "01.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "17.11.2025", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "Hagodeck Preisliste 2026 (pdf), gültig ab 01.02.2026", "gu": "01.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "17.11.2025", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "Hagomat Preisliste 2026 (pdf), gültig ab 01.02.2026", "gu": "01.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "17.11.2025", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "Hagodeck Preisliste 2026 (xlsx), gültig ab 01.02.2026", "gu": "01.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "17.11.2025", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "Katalog HagoMat", "gu": "01.01.2024 - 31.12.2026", "tp": "übergeordnet", "ei": "25.11.2024", "vr": "", "bm": "", "cls": "sonstige"}, {"bz": "Hagodeck Preisliste 2025 (xlsx), gültig ab 01.02.2025", "gu": "01.02.2025 - 31.12.2026", "tp": "übergeordnet", "ei": "25.11.2024", "vr": "", "bm": "", "cls": "preisliste"}], "future": []}, {"id": "899645", "name": "EPS Industries GmbH", "ort": "St. Veit a. d. Glan", "wg": "Dämmstoffe", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "EPS - Preise CC Ktn+Stmk ab 04.05.2026 bis auf Widerruf", "gu": "04.05.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "23.04.2026", "vr": "", "bm": "", "cls": "preisliste"}], "future": []}, {"id": "920180", "name": "Gaulhofer Industrie-Holding GmbH", "ort": "Übelbach", "wg": "Türen / Tore / Fenster / Treppen", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [], "future": []}, {"id": "920280", "name": "Geberit Vertriebs GmbH & Co. KG", "ort": "Pottenbrunn", "wg": "Sanitär", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "MEA Bausysteme Produktkatalog und Preisliste 2026 (pdf)", "gu": "01.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "08.01.2026", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "MEA Bausysteme Preisliste 2026 (xlsx)", "gu": "01.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "08.01.2026", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "MEA Water Management Preisliste AT 2026 (xlsx)", "gu": "01.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "08.01.2026", "vr": "", "bm": "", "cls": "preisliste"}], "future": []}, {"id": "920960", "name": "Hago Bautechnik GmbH", "ort": "Wels", "wg": "Tiefbau / GaLaBau", "listung": "CC-Listung und hgb-Listung", "found": false, "aktuelle": [], "future": []}, {"id": "928055", "name": "HIRSCH Porozell GmbH", "ort": "Glanegg", "wg": "Hochbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Hirsch Preisblatt April 2026 (für Lieferungen ab 27. April bis 30.06.2026", "gu": "27.04.2026 - 30.06.2026", "tp": "übergeordnet", "ei": "14.04.2026", "vr": "aktuelle Preise sind bis 30.06.2026 verlängert.", "bm": "", "cls": "preisliste"}], "future": []}, {"id": "921430", "name": "Holcim (Österreich) GmbH", "ort": "Wien", "wg": "Hochbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [], "future": []}, {"id": "920220", "name": "Hörmann Austria GesmbH", "ort": "Mondsee", "wg": "Türen / Tore / Fenster / Treppen", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Hörmann Händlervereinbarung CC AT ab 01.03.2026", "gu": "01.03.2026 - 28.02.2027", "tp": "übergeordnet", "ei": "05.02.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Hörmann Händlervereinbarung CC AT ab 01.03.2025", "gu": "01.03.2025 - 31.12.2026", "tp": "übergeordnet", "ei": "03.02.2025", "vr": "", "bm": "die Vereinbarung wird für 2026 unverändert weitergeführt", "cls": "kondi"}, {"bz": "Hörmann AT - Angebot Mobile Fahrzeugsperren", "gu": "09.07.2025 - 31.12.2026", "tp": "übergeordnet", "ei": "09.07.2025", "vr": "", "bm": "", "cls": "sonstige"}], "future": []}, {"id": "920530", "name": "ISOLITH-Leichtbauplatten-Werk", "ort": "Straßwalchen", "wg": "Trockenbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Isolith Preisliste 2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "06.02.2026", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "Isolith Konditionen CC AT 2026", "gu": "03.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "06.02.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Isolith Preisliste CEWOOD", "gu": "01.06.2025 - 31.12.2026", "tp": "übergeordnet", "ei": "06.02.2026", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "Isolith CEWOOD Konditionen 2026", "gu": "03.02.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "06.02.2026", "vr": "", "bm": "", "cls": "kondi"}], "future": []}, {"id": "920930", "name": "James Hardie Austria", "ort": "Wiener Neudorf", "wg": "Trockenbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "JH Konditionen ab 01.01.2026_bis auf Widerruf", "gu": "01.01.2026 - 31.12.2027", "tp": "übergeordnet", "ei": "19.11.2025", "vr": "", "bm": "Aufgrund einer Verringerung der Preiserhöhung für CC-Mitglieder im EK wurden die Konditionen der folgenden Produktgruppen verbessert, siehe Konditionsblatt. Ausgangsbasis Listenpreise 2026. Bitte berücksichtigen Sie dies entsprechend für Ihre Konditionspflege.Konditionsverbesserungen der folgenden Produktgruppen ab 01.01.2026:EinmannplattenAusgleichsschüttungenEstrich-ElementePowerpanel H2O", "cls": "kondi"}, {"bz": "JamesHardie AT Preisliste excel 2026, gültig ab 01.01.2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "06.11.2025", "vr": "", "bm": "", "cls": "preisliste"}], "future": []}, {"id": "920150", "name": "Jeld-Wen Deutschland GmbH", "ort": "Türnitz", "wg": "Türen / Tore / Fenster / Treppen", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [], "future": []}, {"id": "920230", "name": "Knauf Gesellschaft m.b.H.", "ort": "Wien", "wg": "Hochbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Knauf Preisliste Lieferprogram 2026 (pdf)", "gu": "01.02.2026 - 31.05.2026", "tp": "übergeordnet", "ei": "08.01.2026", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "Knauf Konditionsblatt DIY Platten ab 01.02.2026_bis auf Widerruf", "gu": "01.04.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "10.04.2026", "vr": "Update per 01.04.2026:Verbesserung Kondition bzw. Nettopreis für Miniboards. Betroffene Positionen sind im Konditionsblatt entsprechend gekennzeichnet.", "bm": "", "cls": "kondi"}, {"bz": "Knauf Sonderplatten + Zubehör ab 01.02.2026_bis auf Widerruf", "gu": "01.04.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "10.04.2026", "vr": "Update per 01.04.2026:Es wurde zu Gunsten der CC-Mitglieder für einige Zubehörartikel verhandelt das der 3 PAL Staffelpreis zum 1 PAL Staffelpreis gewandelt wurde. Die betroffenen Positionen mit verbesserten Konditionen bzw. Nettopreisen sind im Anhang entsprechend gekennzeichnet.", "bm": "", "cls": "sonstige"}, {"bz": "Knauf Profile ab 01.02.2026_bis auf Widerruf", "gu": "01.02.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "19.12.2025", "vr": "", "bm": "", "cls": "sonstige"}, {"bz": "Knauf GK Platten Standard Lager ab 01.02.2026_bis auf Widerruf", "gu": "01.02.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "19.12.2025", "vr": "", "bm": "Konditionsblatt ab 01.02.2026Update per 19.01.2026", "cls": "sonstige"}, {"bz": "Knauf Lieferprogramm 2026 Preisliste UVP (xlsx)", "gu": "01.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "08.01.2026", "vr": "", "bm": "", "cls": "brutto"}, {"bz": "Knauf Änderungsprotokoll Sortimentsliste 2026", "gu": "01.02.2026 - 30.06.2026", "tp": "übergeordnet", "ei": "08.01.2026", "vr": "", "bm": "", "cls": "kondi"}], "future": [{"bz": "Knauf Preisänderungsübersicht je Warengruppe per 01.06.2026", "gu": "01.06.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "27.04.2026", "vr": "", "bm": "Finale Werte für Gipskartonplatten noch in Verhandlung - Finale Info folgt so schnell als möglich per separater Mitteilung bzw. wird es ein finales Update geben.", "cls": "kondi"}, {"bz": "Knauf ListenpPreisliste Lieferprogram 2026 ab 01.06.2026 (pdf)", "gu": "01.06.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "20.04.2026", "vr": "", "bm": "aktualisierte Preisliste 2026, angekündigte Preisanpassungen sind berücksichtigt.", "cls": "preisliste"}]}, {"id": "920400", "name": "Knauf Insulation GmbH", "ort": "Fürnitz", "wg": "Dämmstoffe", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Knauf Insulation Konditionen per 01.05.2026_bis auf Widerruf", "gu": "01.05.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "14.04.2026", "vr": "", "bm": "Für CC-Mittglieder beträgt die Preisanpassung im EK für Key-Lagerprodukte ca. 4,0% anstelle der 5,45%. Das Delta wird in Form Nettopreise bzw. Konditionen für betroffene Produkte abgebildet – betroffene Positionen sind im aktualisierten Konditionsblatt ab 01.05.2026 „Fett“ markiert.", "cls": "kondi"}], "future": []}, {"id": "920470", "name": "Leier Baustoffe GmbH", "ort": "Horitschon", "wg": "Hochbau", "listung": "CC-Listung und hgb-Listung", "found": false, "aktuelle": [], "future": []}, {"id": "899650", "name": "Martin Pichler Ziegelwerk GmbH", "ort": "St. Andrä", "wg": "Hochbau", "listung": "CC-Listung", "found": true, "aktuelle": [], "future": []}, {"id": "920260", "name": "Murexin GmbH", "ort": "Wiener Neustadt", "wg": "Hochbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Minka Konditionsbestätigung 2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "21.11.2025", "vr": "", "bm": "Update Konditionsblatt per 22.12.2025 - verbesserte Konditionen für Arctic Fire und Type 1 im Vergleich zum Vorgänger-Konditionsblatt.", "cls": "kondi"}, {"bz": "Minka Bruttopreisliste 2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "21.11.2025", "vr": "", "bm": "", "cls": "brutto"}, {"bz": "Minka Nettopreisliste per 01.04.2025_bis auf Widerruf", "gu": "01.04.2025 - 31.12.2026", "tp": "übergeordnet", "ei": "23.04.2025", "vr": "Verbesserte Nettopreise im Vergleich zum vorherigen Kondtionsblatt, gültig ab 01.04.2025.", "bm": "", "cls": "netto"}], "future": []}, {"id": "920300", "name": "Pipelife Austria GmbH & Co KG", "ort": "Wien", "wg": "Tiefbau / GaLaBau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Pipelife AT CC Lagerbezug ab EUR 3.500,00 ab 01.05.2026", "gu": "01.05.2026 - 30.06.2026", "tp": "übergeordnet", "ei": "27.04.2026", "vr": "Nettopreise laut PEH Ankündigung April nun per 01.05.26 erhöht.", "bm": "", "cls": "sonstige"}, {"bz": "Pipelife CC Lagerbezug LKW Zug ab 01.05.2026", "gu": "01.05.2026 - 30.06.2026", "tp": "übergeordnet", "ei": "27.04.2026", "vr": "Nettopreise laut PEH Ankündigung April nun per 01.05.26 erhöht.", "bm": "", "cls": "sonstige"}, {"bz": "Pipelife Listenpreise ab 01.04.2026_bis auf Widerruf", "gu": "01.04.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "31.03.2026", "vr": "Siehe Mitteilung im Contract-Net. Steigerung Listenpreise um ca. 10%", "bm": "", "cls": "brutto"}], "future": []}, {"id": "920270", "name": "Prefa Aluminiumprodukte GmbH", "ort": "Marktl bei Lilienfeld", "wg": "Dach & Fassade", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Murexin CC Listungsdaten 2026 ab 07.06.2026", "gu": "07.05.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "07.05.2026", "vr": "", "bm": "Frachtfrei ab Nettowarenwert € 400,0025€ Frachtpauschale bis Nettowarenwert € 400,00", "cls": "kondi"}, {"bz": "Murexin CC Listungsdaten 2026 bis 06.06.2026", "gu": "01.01.2026 - 06.06.2026", "tp": "übergeordnet", "ei": "03.11.2025", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Murexin Preisliste 2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "03.11.2025", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "Murexin Preisliste 2026 FM60 und Sil60", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "03.11.2025", "vr": "", "bm": "", "cls": "preisliste"}], "future": []}, {"id": "920690", "name": "Ringer GmbH", "ort": "Regau", "wg": "Hochbau", "listung": "CC-Listung und hgb-Listung", "found": false, "aktuelle": [], "future": []}, {"id": "921040", "name": "Rockwool Handelsgesellschaft m.b.H.", "ort": "Wien", "wg": "Dämmstoffe", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Rockwool Einkaufskonditionen_Fetter_ab 09.01.2026_bis auf Widerruf", "gu": "09.01.2026 - 31.12.2026", "tp": "C", "ei": "19.01.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Rockwool Einkaufskonditionen_Vogl ab 09.01.2026_bis auf Widerruf", "gu": "09.01.2026 - 31.12.2026", "tp": "B", "ei": "19.01.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Rockwool Einkaufskonditionen_CC Gruppe ab 15.01.2026_bis auf Widerruf", "gu": "15.01.2026 - 31.12.2026", "tp": "A", "ei": "19.01.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "RWA Voraus-PL Flachdach gültig ab 01-01-2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "03.11.2025", "vr": "", "bm": "", "cls": "sonstige"}, {"bz": "RWA Voraus-PL Haustechnik gültig ab 01-01-2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "03.11.2025", "vr": "", "bm": "", "cls": "sonstige"}, {"bz": "RWA Voraus-PL Hochbau gültig ab 01-01-2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "03.11.2025", "vr": "", "bm": "", "cls": "sonstige"}], "future": []}, {"id": "921045", "name": "Rockwool Handelsgesellschaft m.b.H.", "ort": "Wien", "wg": "Dämmstoffe", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [], "future": []}, {"id": "920696", "name": "Röfix AG", "ort": "Röthis", "wg": "Hochbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Röfix Verkaufs-GALA-Aktion Frühjahr 2026 (mit Gewinnspiel) - Gültig ab 01.04.2026", "gu": "05.03.2026 - 30.06.2026", "tp": "übergeordnet", "ei": "05.03.2026", "vr": "", "bm": "Aktion anzeigen", "cls": "kondi"}, {"bz": "RÖFIX Preisliste 2026 ab 01.02.2026", "gu": "01.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "08.01.2026", "vr": "", "bm": "", "cls": "preisliste"}], "future": []}, {"id": "920370", "name": "Saint-Gobain Austria GmbH (Marke Isover)", "ort": "Bad Aussee", "wg": "Dämmstoffe", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "ISOVER Preisliste 2026, gültig ab 0101.2026", "gu": "01.01.2026 - 31.05.2026", "tp": "übergeordnet", "ei": "03.12.2025", "vr": "", "bm": "Bitte um Beachtung der Änderung bei Material 7911460 sowie Informationen zu Lanae.", "cls": "preisliste"}, {"bz": "Preisvergleich Glaswolle 2026", "gu": "24.02.2026 - 31.12.2026", "tp": "B", "ei": "24.02.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Preisvergleich Glaswolle 2026", "gu": "24.02.2026 - 31.12.2026", "tp": "A", "ei": "24.02.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "SG Isover CC AT Konditionen 01.02.26 bis auf Widerruf", "gu": "01.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "13.01.2026", "vr": "Aktualisierte Version Isover per 25.02. mit folgenden ÄnderungenVerbesserte operative Konditionen für Flachdachdämmung Isover S, Isover XH, Metac FLP1, Metac FLP 2.Achtung auf diese Produkte greifen keine CC-Boni.", "bm": "", "cls": "kondi"}], "future": [{"bz": "ISOVER Preisliste 2026v2, gültig ab 01.06.2026", "gu": "01.06.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "22.04.2026", "vr": "", "bm": "", "cls": "preisliste"}]}, {"id": "920640", "name": "Saint-Gobain Austria GmbH (Marke Rigips)", "ort": "Bad Aussee", "wg": "Trockenbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Rigips Konditionsblatt ab 09.04.2026 (Auslieferung) bis auf Widerruf", "gu": "09.04.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "26.02.2026", "vr": "Änderung bezogen auf die Vorgängerliste (Konditionsblatt):+8% bei Metall-ProfilenAchtung dies wird durch eine massive Reduzierung der Listenpreise ab 01.03.2026 durchgeführt. Die +8% im Zukauf (EK) gelten für CC Mitglieder allerdings erst verzögert und zwar für Auslieferungen ab dem 09.04.2026.Daher gibt es in der Übergangszeit, also vom 01.03.2026 bis 09.04.2026 ein separates Konditionsblatt für Profile mit angepassten Rabatten auf Basis EK vor 01.03.2026 und neuer Listenpreis ab 01.03,2026.Ab dem 09.04.2026 werden dann auch für die CC-Mitglieder die +8% im EK gültig und somit dieses Kondiionsblatt gültig.", "bm": "", "cls": "kondi"}, {"bz": "Rigips Konditionsblatt ab Werk Puchberg_ab 01.02.2026 bis auf Widerruf", "gu": "01.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "20.01.2026", "vr": "Abweichende Änderungssätze zur Ankündigung Preisanpassung, bezogen auf den EK der Vorgängerliste (Konditionsblatt):-Erhöhung um 4,5% bei Standardplatten-Erhöhung Fugenfüller 2,5% Übrige Erhöhungen laut Ankündigung.", "bm": "", "cls": "kondi"}, {"bz": "Saint-Gobain Rigips Preisliste ab 01.01.2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "26.11.2025", "vr": "", "bm": "die Veränderungen zu 2025 sind ROT gekennzeichnet. Die derzeit gültigen Rabatte bleiben unverändert.", "cls": "preisliste"}], "future": [{"bz": "Rigips Konditionsblatt ab 01.06.2026 bis auf Widerruf", "gu": "01.06.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "27.04.2026", "vr": "Siehe Ankündigungsschreiben; abweichend hierzu beträgt die Veränderung bei den Gipskartonplatten für CC-Mitglieder 3,9% (usprünglich angekündigt 5,9%).", "bm": "", "cls": "kondi"}, {"bz": "Saint-Gobain Rigips Preisliste ab 01.06.2026", "gu": "01.06.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "27.04.2026", "vr": "Für Positionen mit Veränderung sind die Preise im Anhang rot markiert.", "bm": "", "cls": "preisliste"}, {"bz": "Rigips Konditionen Ab Werk Puchberg 16 To mit 3 Ablader", "gu": "01.06.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "27.04.2026", "vr": "", "bm": "", "cls": "kondi"}]}, {"id": "920360", "name": "Saint-Gobain Austria GmbH (Marke Weber)", "ort": "Bad Aussee", "wg": "Dach & Fassade", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [], "future": []}, {"id": "899770", "name": "SBX Innovative Products", "ort": "Podersdorf am See", "wg": "Hochbau", "listung": "CC-Listung", "found": true, "aktuelle": [{"bz": "Eternabond Produktinformationen", "gu": "05.05.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "05.05.2026", "vr": "", "bm": "", "cls": "sonstige"}, {"bz": "SBX Produktreihe Graffiti (schutz und off)", "gu": "05.05.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "05.05.2026", "vr": "", "bm": "", "cls": "sonstige"}, {"bz": "SBX Preisliste Hagebau 2026", "gu": "05.05.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "05.05.2026", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "SBX Produktreihe Evershield Radcon und Radmyx", "gu": "05.05.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "05.05.2026", "vr": "", "bm": "", "cls": "sonstige"}, {"bz": "SBX Asphalt Repair DE", "gu": "05.05.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "05.05.2026", "vr": "", "bm": "", "cls": "sonstige"}, {"bz": "SBX FireStar", "gu": "05.05.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "05.05.2026", "vr": "", "bm": "", "cls": "sonstige"}, {"bz": "SBX Fast2K Aktion Mai 2026", "gu": "05.05.2026 - 31.05.2026", "tp": "übergeordnet", "ei": "05.05.2026", "vr": "", "bm": "Einführungsangebot - 15% bis 31.05.2026", "cls": "kondi"}, {"bz": "SBX Fast2K Kurzinfo", "gu": "05.05.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "05.05.2026", "vr": "", "bm": "", "cls": "sonstige"}], "future": []}, {"id": "899728", "name": "SCHMIDT's Handelsgesellschaft mbH", "ort": "", "wg": "Dämmstoffe", "listung": "CC-Listung", "found": true, "aktuelle": [{"bz": "Drahtgitter und Geflechte Nettopreisliste 2026", "gu": "03.03.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "03.03.2026", "vr": "", "bm": "", "cls": "netto"}, {"bz": "Schmidt's RDS 2026", "gu": "03.03.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "03.03.2026", "vr": "", "bm": "Ringraumdichtungen, Mauerkragen, Lamellenrohr", "cls": "sonstige"}, {"bz": "Schmidt's Drähte und Stifte 2026", "gu": "03.03.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "03.03.2026", "vr": "", "bm": "", "cls": "sonstige"}, {"bz": "Schmidt's Siwitec Abdeckplanen Preisliste 2026", "gu": "05.02.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "05.02.2026", "vr": "", "bm": "", "cls": "preisliste"}], "future": []}, {"id": "920620", "name": "Steinbacher Vertriebs GmbH", "ort": "", "wg": "Dämmstoffe", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Steinbacher Konditionen per 04.05.2026_29.05.2026", "gu": "04.05.2026 - 29.05.2026", "tp": "übergeordnet", "ei": "27.04.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Steinbacher Lieferbedingungen", "gu": "02.12.2025 - 31.12.2026", "tp": "übergeordnet", "ei": "20.02.2025", "vr": "", "bm": "Stand Dezember 2025die aktuellen Lieferbedingungen sind unter https://www.steinbacher.at/downloads-und-service/downloads/abrufbar", "cls": "sonstige"}], "future": []}, {"id": "926830", "name": "Widmoser Ges.m.b.H.", "ort": "Kirchberg-Thening", "wg": "Tiefbau / GaLaBau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Widmoser Preisliste 2026", "gu": "02.02.2026 - 31.01.2027", "tp": "übergeordnet", "ei": "02.02.2026", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "Widmoser Aktionsprodukte 2026", "gu": "02.02.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "02.02.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Widmoser_2026_Konditionen_Zustellzone 1", "gu": "02.02.2026 - 31.01.2027", "tp": "A", "ei": "02.02.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Widmoser_2026_Konditionen_Zustellzone 2", "gu": "02.02.2026 - 31.01.2027", "tp": "B", "ei": "02.02.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Widmoser_2026_Konditionen_Zustellzone 3", "gu": "02.02.2026 - 31.01.2027", "tp": "C", "ei": "02.02.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Widmoser SB-Linie Klinkerprodukte", "gu": "21.03.2025 - 30.06.2026", "tp": "übergeordnet", "ei": "21.03.2025", "vr": "", "bm": "weitere Informationen dazu finden Sie im Newsletter-Link", "cls": "sonstige"}, {"bz": "Widmoser SB Linie Gesamt", "gu": "21.03.2025 - 30.06.2026", "tp": "übergeordnet", "ei": "21.03.2025", "vr": "", "bm": "weitere Informationen dazu finden Sie im Newsletter-Link", "cls": "sonstige"}], "future": []}, {"id": "920320", "name": "Wienerberger Österreich GmbH", "ort": "Wien", "wg": "Hochbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Koramic Preisliste 2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "14.11.2025", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "Tondach Preisliste 2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "14.11.2025", "vr": "", "bm": "", "cls": "preisliste"}, {"bz": "Porotherm Preisliste 2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "14.11.2025", "vr": "", "bm": "aktuelle Preislisten finden Sie unter: https://www.wienerberger.at/service-support/downloadcenter/preislisten.html", "cls": "preisliste"}], "future": []}, {"id": "920920", "name": "Wippro GmbH", "ort": "Gmunden", "wg": "Türen / Tore / Fenster / Treppen", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Wippro Konditionsblatt CC AT 2026", "gu": "01.01.2026 - 31.05.2026", "tp": "übergeordnet", "ei": "08.01.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Wippro Warenstammliste ab 01.01.2026", "gu": "01.01.2026 - 31.05.2026", "tp": "übergeordnet", "ei": "08.01.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Wippro Händlerpreisliste UVP ab 01.01.2026 bis auf Widerruf", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "08.01.2026", "vr": "", "bm": "", "cls": "kondi"}], "future": [{"bz": "Wippro Konditionsblatt CC AT 2026_ab 01.06.2026", "gu": "01.06.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "05.05.2026", "vr": "", "bm": "", "cls": "kondi"}, {"bz": "Wippro Warenstammliste ab 01.06.2026", "gu": "01.06.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "05.05.2026", "vr": "", "bm": "", "cls": "kondi"}]}, {"id": "920350", "name": "Xella Porenbeton Österreich GmbH", "ort": "Loosdorf", "wg": "Hochbau", "listung": "CC-Listung und hgb-Listung", "found": true, "aktuelle": [{"bz": "Xella Jahresvereinbarung CC Gruppe 2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "03.12.2025", "vr": "", "bm": "die Kondition des Planstein 7,5 cm wurde verbessert", "cls": "kondi"}, {"bz": "Xella AT Preisliste 2026", "gu": "01.01.2026 - 31.12.2026", "tp": "übergeordnet", "ei": "05.11.2025", "vr": "", "bm": "aktuelle Preislisten unter: www.xella.at/preisliste", "cls": "preisliste"}], "future": []}];
+const TODAY = new Date('2026-05-16');
+const CLS_LABELS = {kondi: 'Konditionsblatt', brutto: 'Bruttopreisliste', netto: 'Nettopreisliste', preisliste: 'Preisliste', sonstige: 'Sonstige'};
+
+function parseDate(s) {
+  if (!s) return null;
+  const m = s.match(/(\\d{2})\\.(\\d{2})\\.(\\d{4})/);
+  if (!m) return null;
+  return new Date(`${m[3]}-${m[2]}-${m[1]}`);
+}
+function parseGueltigkeit(g) {
+  const parts = (g || '').split(/\\s*-\\s*/);
+  return {from: parseDate(parts[0]), to: parseDate(parts[1])};
+}
+function daysUntil(d) {
+  if (!d) return null;
+  return Math.round((d - TODAY) / (1000*60*60*24));
+}
+function fmtDate(d) {
+  if (!d) return '';
+  return [d.getDate(), d.getMonth()+1, d.getFullYear()].map(n => String(n).padStart(2,'0')).join('.');
+}
+function dayClass(days) {
+  if (days == null) return 'days-grey';
+  if (days < 0) return 'days-grey';
+  if (days <= 7) return 'days-red';
+  if (days <= 30) return 'days-orange';
+  return 'days-green';
+}
+
+let currentDays = 30;
+let currentCls = 'all';
+let currentView = 'expiring';
+
+function getAllDocs() {
+  const docs = [];
+  DATA.forEach(s => {
+    s.aktuelle.forEach(d => {
+      const g = parseGueltigkeit(d.gu);
+      docs.push({supplier: s, doc: d, status: 'aktuelle', from: g.from, to: g.to, daysToExpiry: daysUntil(g.to)});
+    });
+    s.future.forEach(d => {
+      const g = parseGueltigkeit(d.gu);
+      docs.push({supplier: s, doc: d, status: 'future', from: g.from, to: g.to, daysToExpiry: daysUntil(g.to)});
+    });
+  });
+  return docs;
+}
+
+function renderStats() {
+  const docs = getAllDocs();
+  const aktDocs = docs.filter(d => d.status === 'aktuelle');
+  const expiringSoon = aktDocs.filter(d => d.daysToExpiry != null && d.daysToExpiry >= 0 && d.daysToExpiry <= 30).length;
+  const expiringCritical = aktDocs.filter(d => d.daysToExpiry != null && d.daysToExpiry >= 0 && d.daysToExpiry <= 7).length;
+  const futureCount = docs.filter(d => d.status === 'future').length;
+  const suppliersWithDocs = new Set(aktDocs.map(d => d.supplier.id)).size;
+  const suppliersNoDocs = DATA.filter(s => s.found && s.aktuelle.length === 0 && s.future.length === 0).length;
+  const suppliersNotFound = DATA.filter(s => !s.found).length;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-card"><div class="num">${DATA.length}</div><div class="lbl">AT-Lieferanten in CC-Net</div></div>
+    <div class="stat-card ok"><div class="num">${suppliersWithDocs}</div><div class="lbl">mit aktuellen Dokumenten</div></div>
+    <div class="stat-card warn"><div class="num">${suppliersNoDocs}</div><div class="lbl">in ContractNet, aber keine Dokumente</div></div>
+    <div class="stat-card danger"><div class="num">${suppliersNotFound}</div><div class="lbl">nicht in ContractNet (Lief-Nr prüfen)</div></div>
+    <div class="stat-card warn"><div class="num">${expiringSoon}</div><div class="lbl">fällig in ≤ 30 Tagen</div></div>
+    <div class="stat-card danger"><div class="num">${expiringCritical}</div><div class="lbl">fällig in ≤ 7 Tagen</div></div>
+    <div class="stat-card"><div class="num">${futureCount}</div><div class="lbl">Folge-Dokumente eingestellt</div></div>
+  `;
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderExpiring() {
+  const docs = getAllDocs()
+    .filter(d => d.status === 'aktuelle')
+    .filter(d => d.daysToExpiry != null && d.daysToExpiry >= 0 && d.daysToExpiry <= currentDays)
+    .filter(d => currentCls === 'all' || d.doc.cls === currentCls)
+    .sort((a,b) => (a.daysToExpiry||0) - (b.daysToExpiry||0));
+  if (docs.length === 0) {
+    return '<div class="empty-message">Keine fälligen Dokumente im gewählten Zeitraum.</div>';
+  }
+  let html = `<div class="list-pane">
+    <div class="list-header">
+      <div>Fällig in</div><div>Lieferant · Dokument</div><div>Gültig ab</div><div>Gültig bis</div>
+      <div>Eingestellt</div><div>Typ</div><div>Kategorie</div>
+    </div>`;
+  docs.forEach(d => {
+    const s = d.supplier, doc = d.doc;
+    const follower = s.future.find(f => parseGueltigkeit(f.gu).from && parseGueltigkeit(f.gu).from >= d.to && f.cls === doc.cls);
+    const followerNote = follower ? ' · ✅ Folgedokument vorhanden' : ' · ⚠️ kein Folgedokument';
+    html += `<div class="list-row">
+      <div class="days-cell ${dayClass(d.daysToExpiry)}">${d.daysToExpiry} T</div>
+      <div><strong>${escapeHtml(s.name)}</strong> <code style="color:#888;font-size:11px">[${s.id}]</code><br><span style="font-size:12px;color:#555">${escapeHtml(doc.bz)}${followerNote}</span></div>
+      <div>${fmtDate(d.from)}</div>
+      <div>${fmtDate(d.to)}</div>
+      <div>${escapeHtml(doc.ei)}</div>
+      <div>${escapeHtml(doc.tp)}</div>
+      <div><span class="badge b-${doc.cls}">${CLS_LABELS[doc.cls]}</span></div>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function getSupplierStatusBadges(s) {
+  const cats = ['kondi','brutto','netto'];
+  const labels = {kondi: 'K', brutto: 'B', netto: 'N'};
+  const ttls = {kondi: 'Konditionsblatt', brutto: 'Bruttopreisliste', netto: 'Nettopreisliste'};
+  return cats.map(c => {
+    const akt = s.aktuelle.filter(d => d.cls === c);
+    const fut = s.future.filter(d => d.cls === c);
+    if (akt.length === 0 && fut.length === 0) return `<span class="summary-pill sp-miss" title="${ttls[c]}: fehlt">${labels[c]}</span>`;
+    if (akt.length === 0 && fut.length > 0) return `<span class="summary-pill sp-future" title="${ttls[c]}: nur Folgedokument">${labels[c]}</span>`;
+    const minDays = Math.min(...akt.map(d => daysUntil(parseGueltigkeit(d.gu).to) ?? 9999));
+    if (minDays <= 30) return `<span class="summary-pill sp-warn" title="${ttls[c]}: läuft in ${minDays}T aus">${labels[c]}</span>`;
+    return `<span class="summary-pill sp-ok" title="${ttls[c]}: aktuell">${labels[c]}</span>`;
+  }).join(' ');
+}
+
+function renderSupplierList() {
+  const filtered = DATA.filter(s => s.found);
+  const sorted = filtered.slice().sort((a,b) => a.name.localeCompare(b.name));
+  let html = '';
+  sorted.forEach(s => {
+    const totalDocs = s.aktuelle.length + s.future.length;
+    html += `<details class="supplier">
+      <summary>
+        <span></span>
+        <code>${s.id}</code>
+        <div><strong>${escapeHtml(s.name)}</strong> <span style="font-weight:normal;color:#777;font-size:12px">· ${escapeHtml(s.ort)} · ${escapeHtml(s.wg)}</span></div>
+        <div style="font-size:12px;color:#555">${s.aktuelle.length} aktuell · ${s.future.length} künftig</div>
+        <div>${getSupplierStatusBadges(s)}</div>
+      </summary>
+      <div class="doc-table">
+        ${totalDocs === 0 ? '<div style="color:#9ca3af;padding:8px">Keine aktuellen oder künftigen Dokumente.</div>' : ''}
+        ${s.aktuelle.map(d => {
+          const g = parseGueltigkeit(d.gu);
+          const days = daysUntil(g.to);
+          return `<div class="doc-row">
+            <div>${escapeHtml(d.bz)}</div>
+            <div>${fmtDate(g.from)} – ${fmtDate(g.to)}</div>
+            <div class="${dayClass(days)}">${days != null ? days+' T' : '-'}</div>
+            <div>${escapeHtml(d.tp)}</div>
+            <div><span class="badge b-${d.cls}">${CLS_LABELS[d.cls]}</span></div>
+          </div>`;
+        }).join('')}
+        ${s.future.map(d => {
+          const g = parseGueltigkeit(d.gu);
+          return `<div class="doc-row" style="opacity:.85">
+            <div>📅 ${escapeHtml(d.bz)}</div>
+            <div>${fmtDate(g.from)} – ${fmtDate(g.to)}</div>
+            <div class="days-grey">künftig</div>
+            <div>${escapeHtml(d.tp)}</div>
+            <div><span class="badge b-future">Folgedok.</span></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </details>`;
+  });
+  return html;
+}
+
+function renderMissing() {
+  const noDocs = DATA.filter(s => s.found && s.aktuelle.length === 0 && s.future.length === 0);
+  const notFound = DATA.filter(s => !s.found);
+  let html = '';
+  if (notFound.length) {
+    html += '<h3>Im CC-Net vorhanden, aber per Lief.-Nr. nicht direkt auffindbar (manuell beibehalten)</h3>';
+    html += '<div class="list-pane"><div class="list-header" style="grid-template-columns:100px 1fr 1fr 1fr"><div>Lief.-ID</div><div>Name</div><div>Ort</div><div>Warengruppe</div></div>';
+    notFound.forEach(s => {
+      html += `<div class="list-row" style="grid-template-columns:100px 1fr 1fr 1fr"><div><code>${s.id}</code></div><div>${escapeHtml(s.name)}</div><div>${escapeHtml(s.ort)}</div><div>${escapeHtml(s.wg)}</div></div>`;
+    });
+    html += '</div>';
+  }
+  if (noDocs.length) {
+    html += '<h3>In ContractNet — aber keine aktuellen/künftigen Dokumente</h3>';
+    html += '<div class="list-pane"><div class="list-header" style="grid-template-columns:100px 1fr 1fr 1fr"><div>Lief.-ID</div><div>Name</div><div>Ort</div><div>Warengruppe</div></div>';
+    noDocs.forEach(s => {
+      html += `<div class="list-row" style="grid-template-columns:100px 1fr 1fr 1fr"><div><code>${s.id}</code></div><div>${escapeHtml(s.name)}</div><div>${escapeHtml(s.ort)}</div><div>${escapeHtml(s.wg)}</div></div>`;
+    });
+    html += '</div>';
+  }
+  return html || '<div class="empty-message">Alles in Ordnung — alle Lieferanten haben Dokumente.</div>';
+}
+
+function render() {
+  const c = document.getElementById('content');
+  if (currentView === 'expiring') c.innerHTML = renderExpiring();
+  else if (currentView === 'supplier') c.innerHTML = renderSupplierList();
+  else c.innerHTML = renderMissing();
+}
+
+document.getElementById('dayslider').addEventListener('input', (e) => {
+  currentDays = parseInt(e.target.value);
+  document.getElementById('daysout').textContent = currentDays + ' Tagen';
+  if (currentView === 'expiring') render();
+});
+document.querySelectorAll('.pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    currentCls = p.dataset.cls;
+    if (currentView === 'expiring') render();
+  });
+});
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    currentView = t.dataset.view;
+    render();
+  });
+});
+
+renderStats();
+render();
+</script>
+</body>
+</html>
