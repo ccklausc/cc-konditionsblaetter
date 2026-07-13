@@ -20,7 +20,9 @@
   .pill { padding: 6px 12px; border: 1px solid #ccc; border-radius: 20px; cursor: pointer; user-select: none; font-size: 13px; background: white; }
   .pill.active { background: #1c3a5e; color: white; border-color: #1c3a5e; }
   .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
-  .stat-card { background: white; padding: 14px 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
+  .stat-card { background: white; padding: 14px 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.07); cursor: pointer; transition: box-shadow .15s, transform .15s; }
+  .stat-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.16); transform: translateY(-1px); }
+  .stat-card.active-stat { outline: 2px solid #1c3a5e; outline-offset: 1px; }
   .stat-card .num { font-size: 22px; font-weight: 700; color: #1c3a5e; }
   .stat-card .lbl { font-size: 12px; color: #666; margin-top: 2px; }
   .stat-card.warn .num { color: #d97706; }
@@ -140,6 +142,29 @@ function matchesSearch(s) {
   return (s.name || '').toLowerCase().includes(q) || (s.id || '').toLowerCase().includes(q);
 }
 
+let statFilter = 'all';
+function setTabActive(view) {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.view === view));
+}
+function applyStat(stat, card) {
+  document.querySelectorAll('.stat-card').forEach(x => x.classList.remove('active-stat'));
+  if (card) card.classList.add('active-stat');
+  if (stat === 'exp30' || stat === 'exp7') {
+    currentView = 'expiring'; statFilter = 'all'; currentDays = (stat === 'exp7' ? 7 : 30); currentCls = 'all';
+    const sl = document.getElementById('dayslider'); if (sl) sl.value = currentDays;
+    document.getElementById('daysout').textContent = currentDays + ' Tagen';
+    document.querySelectorAll('.pill').forEach(x => x.classList.toggle('active', x.dataset.cls === 'all'));
+  } else if (stat === 'withdocs') { currentView = 'supplier'; statFilter = 'withdocs'; }
+  else if (stat === 'future') { currentView = 'supplier'; statFilter = 'future'; }
+  else if (stat === 'allsup') { currentView = 'supplier'; statFilter = 'all'; }
+  else if (stat === 'nodocs') { currentView = 'missing'; statFilter = 'nodocs'; }
+  else if (stat === 'notfound') { currentView = 'missing'; statFilter = 'notfound'; }
+  else return;
+  setTabActive(currentView);
+  render();
+  const c = document.getElementById('content'); if (c) c.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
 function getAllDocs() {
   const docs = [];
   DATA.forEach(s => {
@@ -165,13 +190,13 @@ function renderStats() {
   const suppliersNoDocs = DATA.filter(s => s.found && s.aktuelle.length === 0 && s.future.length === 0).length;
   const suppliersNotFound = DATA.filter(s => !s.found).length;
   document.getElementById('stats').innerHTML = `
-    <div class="stat-card"><div class="num">${DATA.length}</div><div class="lbl">AT-Lieferanten in CC-Net</div></div>
-    <div class="stat-card ok"><div class="num">${suppliersWithDocs}</div><div class="lbl">mit aktuellen Dokumenten</div></div>
-    <div class="stat-card warn"><div class="num">${suppliersNoDocs}</div><div class="lbl">in ContractNet, aber keine Dokumente</div></div>
-    <div class="stat-card danger"><div class="num">${suppliersNotFound}</div><div class="lbl">nicht in ContractNet (Lief-Nr prüfen)</div></div>
-    <div class="stat-card warn"><div class="num">${expiringSoon}</div><div class="lbl">fällig in ≤ 30 Tagen</div></div>
-    <div class="stat-card danger"><div class="num">${expiringCritical}</div><div class="lbl">fällig in ≤ 7 Tagen</div></div>
-    <div class="stat-card"><div class="num">${futureCount}</div><div class="lbl">Folge-Dokumente eingestellt</div></div>
+    <div class="stat-card" data-stat="allsup" title="Alle Lieferanten anzeigen"><div class="num">${DATA.length}</div><div class="lbl">AT-Lieferanten in CC-Net</div></div>
+    <div class="stat-card ok" data-stat="withdocs" title="Lieferanten mit aktuellen Dokumenten"><div class="num">${suppliersWithDocs}</div><div class="lbl">mit aktuellen Dokumenten</div></div>
+    <div class="stat-card warn" data-stat="nodocs" title="Lieferanten ohne Dokumente"><div class="num">${suppliersNoDocs}</div><div class="lbl">in ContractNet, aber keine Dokumente</div></div>
+    <div class="stat-card danger" data-stat="notfound" title="In ContractNet nicht gefunden"><div class="num">${suppliersNotFound}</div><div class="lbl">nicht in ContractNet (Lief-Nr prüfen)</div></div>
+    <div class="stat-card warn" data-stat="exp30" title="Dokumente fällig in ≤ 30 Tagen"><div class="num">${expiringSoon}</div><div class="lbl">fällig in ≤ 30 Tagen</div></div>
+    <div class="stat-card danger" data-stat="exp7" title="Dokumente fällig in ≤ 7 Tagen"><div class="num">${expiringCritical}</div><div class="lbl">fällig in ≤ 7 Tagen</div></div>
+    <div class="stat-card" data-stat="future" title="Lieferanten mit eingestellten Folge-Dokumenten"><div class="num">${futureCount}</div><div class="lbl">Folge-Dokumente eingestellt</div></div>
   `;
 }
 
@@ -228,7 +253,9 @@ function getSupplierStatusBadges(s) {
 }
 
 function renderSupplierList() {
-  const filtered = DATA.filter(s => s.found && matchesSearch(s));
+  let filtered = DATA.filter(s => s.found && matchesSearch(s));
+  if (statFilter === 'withdocs') filtered = filtered.filter(s => s.aktuelle.length > 0);
+  else if (statFilter === 'future') filtered = filtered.filter(s => s.future.length > 0);
   const sorted = filtered.slice().sort((a,b) => a.name.localeCompare(b.name));
   if (sorted.length === 0) return '<div class="empty-message">Kein Lieferant gefunden.</div>';
   let html = '';
@@ -272,8 +299,8 @@ function renderSupplierList() {
 }
 
 function renderMissing() {
-  const noDocs = DATA.filter(s => s.found && s.aktuelle.length === 0 && s.future.length === 0 && matchesSearch(s));
-  const notFound = DATA.filter(s => !s.found && matchesSearch(s));
+  const noDocs = (statFilter === 'notfound') ? [] : DATA.filter(s => s.found && s.aktuelle.length === 0 && s.future.length === 0 && matchesSearch(s));
+  const notFound = (statFilter === 'nodocs') ? [] : DATA.filter(s => !s.found && matchesSearch(s));
   let html = '';
   if (notFound.length) {
     html += '<h3>Nicht in ContractNet auffindbar (Lief.-ID veraltet/neu zugeordnet)</h3>';
@@ -330,8 +357,14 @@ document.querySelectorAll('.tab').forEach(t => {
     document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
     t.classList.add('active');
     currentView = t.dataset.view;
+    statFilter = 'all';
+    document.querySelectorAll('.stat-card').forEach(x => x.classList.remove('active-stat'));
     render();
   });
+});
+document.getElementById('stats').addEventListener('click', (e) => {
+  const card = e.target.closest('.stat-card');
+  if (card && card.dataset.stat) applyStat(card.dataset.stat, card);
 });
 
 renderStats();
